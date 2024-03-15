@@ -21,7 +21,7 @@
 #define G_EXC 1.0 // excitatory synapse conductance [nS]
 #define G_INH 4.0 // inhibitory synapse conductance [nS]
 
-#define I_INJ 255.0 // first injection current [pA]
+#define I_INJ 250.0 // first injection current [pA]
 
 #define DT 0.001 // [s]
 #define MAX_TIME 1.0 // [s]
@@ -46,7 +46,7 @@ double dgidt(double g_syn){
     return -g_syn / TAUS_CONS;
 }
 
-void sum_synaptic_connection(int neuron_index, double *v_memb, double Mij[][N_NEURONS], double *g_syn, double *sum){
+void sum_synaptic_connection(int neuron_index, double *v_memb, int Mij[][N_NEURONS], double *g_syn, double *sum){
     // equation (1)-1-sum
     double v_rev;
     double sum_syn = 0.0;
@@ -58,15 +58,23 @@ void sum_synaptic_connection(int neuron_index, double *v_memb, double Mij[][N_NE
     return;
 }
 
-void generate_connection_mij(double Mij[][N_NEURONS]){
+void generate_connection_mij(int Mij[][N_NEURONS], FILE *mij_out){
     // make connection according to connection probability
-    int row, column;
+    int pre_neuron, post_neuron;
     double rand_tmp; // random number temporary
-    for (row = 0; row < N_NEURONS; row++){
-        for (column = 0; column < N_NEURONS; column++){
-            rand_tmp = random_number(0,1);
-            Mij[row][column] = (rand_tmp < P_CONNECT) ? 1 : 0;
+    for (pre_neuron = 0; pre_neuron < N_NEURONS; pre_neuron++){
+        for (post_neuron = 0; post_neuron < N_NEURONS; post_neuron++){
+            if (pre_neuron != post_neuron){
+                rand_tmp = random_number(0,1);
+                Mij[pre_neuron][post_neuron] = (rand_tmp < P_CONNECT) ? 1 : 0;
+                fprintf(mij_out, "%d ", Mij[pre_neuron][post_neuron]);
+            }else{
+                // pre = post -> no connection
+                Mij[pre_neuron][post_neuron] = 0;
+                fprintf(mij_out, "%d ", Mij[pre_neuron][post_neuron]);
+            }
         }
+        fprintf(mij_out, "\n");
     }
 }
 
@@ -100,13 +108,14 @@ int main(){
     double a_subthreshold[N_NEURONS]; //
 
     double sum_synconnect[N_NEURONS]; //
-    double Mij_connect[N_NEURONS][N_NEURONS]; //
+    int Mij_connect[N_NEURONS][N_NEURONS]; //
 
     int count_limit = (int) MAX_TIME / DT;
     
-    FILE *v_out_pointer, *t_out_pointer;
+    FILE *v_out_pointer, *t_out_pointer, *mij_out_pointer;
     char *v_filename = "v_memb_out.txt";
     char *t_filename = "t_spike_out.txt";
+    char *mij_filename = "connection.txt";
 
     v_out_pointer = fopen(v_filename, "w");
     if(v_out_pointer == NULL){
@@ -120,9 +129,14 @@ int main(){
         return 1;
     }
 
+    mij_out_pointer = fopen(mij_filename, "w");
+    if(mij_out_pointer == NULL){
+        printf("cannot open output file : %s \n", mij_filename);
+    }
+
     srand((unsigned int)time(NULL));
     initialize(v_memb_potential, w_adap_current, g_syn_conductance, a_subthreshold, gamma_ext_current, I_inj_current);
-    generate_connection_mij(Mij_connect);
+    generate_connection_mij(Mij_connect, mij_out_pointer);
     // calculate defferential equation
     for (int t = 0; t < count_limit; t++){
         printf("time count : %d\n", t);
@@ -149,5 +163,6 @@ int main(){
 
     fclose(v_out_pointer);
     fclose(t_out_pointer);
+    fclose(mij_out_pointer);
     return 0;
 }
