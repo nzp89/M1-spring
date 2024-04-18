@@ -2,29 +2,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "aeif_parameter.h"
+#include "aeif_1neuron.h"
 
-#define TMAX 1000.0 // time max [ms]
+#define TMAX 500.0 // time max [ms]
 #define DT 0.001 // time difference [ms]
 
-static inline double dvdt(double v_memb, double w_current, struct one_Neuron neurontype){
-    return ( -neurontype.gl_cond * (v_memb - neurontype.el_rest) + neurontype.gl_cond * neurontype.slopefactor * exp( (v_memb - neurontype.vt_theta) / neurontype.slopefactor ) + neurontype.i_ext - w_current ) / neurontype.c_capa;
+static inline double dvdt(double v_memb, double w_current, struct one_Neuron neuron){
+    return ( -neuron.gl_cond * (v_memb - neuron.el_rest) + neuron.gl_cond * neuron.slopefactor * exp( (v_memb - neuron.vt_theta) / neuron.slopefactor ) + neuron.i_ext - w_current ) / neuron.c_capa;
 }
 
-static inline double dwdt(double v_memb, double w_current, struct one_Neuron neurontype){
-    return (neurontype.a_cond * (v_memb - neurontype.el_rest) - w_current) / neurontype.tauw_cons;
+static inline double dwdt(double v_memb, double w_current, struct one_Neuron neuron){
+    return (neuron.a_cond * (v_memb - neuron.el_rest) - w_current) / neuron.tauw_cons;
 }
 
 
 int main(){
 
-    struct one_Neuron neurontype = fig4g; // changable
-    double v_memb, w_current;
-    v_memb = neurontype.el_rest;
+    struct one_Neuron neuron = fig4f; // changable
+    double v_memb, w_current, old_v, old_w;
+    v_memb = neuron.el_rest;
     w_current = 0.0;
 
     FILE *v_file;
-    char *v_filename = "fig4g_voltage.txt";
+    char *v_filename = "output_txt/fig4f_voltage.txt";
     v_file = fopen(v_filename, "w");
     if(v_file == NULL){
         printf("cannot open the file : %s\n", v_filename);
@@ -37,14 +37,35 @@ int main(){
             printf("time count : %d\n", time);
             fprintf(v_file, "%f %f\n", time * DT, v_memb);
         }
-        v_memb += DT * dvdt(v_memb, w_current, neurontype);
-        w_current += DT * dwdt(v_memb, w_current, neurontype);
+        /*
+        // runge-kutta method
+        double dvdt1 = dvdt(v_memb, w_current, neuron);
+        double dwdt1 = dwdt(v_memb, w_current, neuron);
 
+        double dvdt2 = dvdt(v_memb + 0.5 * DT * dvdt1, w_current + 0.5 * DT * dwdt1, neuron);
+        double dwdt2 = dwdt(v_memb + 0.5 * DT * dvdt1, w_current + 0.5 * DT * dwdt1, neuron);
+
+        double dvdt3 = dvdt(v_memb + 0.5 * DT * dvdt2, w_current + 0.5 * DT * dwdt2, neuron);
+        double dwdt3 = dwdt(v_memb + 0.5 * DT * dvdt2, w_current + 0.5 * DT * dwdt2, neuron);
+
+        double dvdt4 = dvdt(v_memb + DT * dvdt3, w_current + DT * dwdt3, neuron);
+        double dwdt4 = dwdt(v_memb + DT * dvdt3, w_current + DT * dwdt3, neuron);
+
+        v_memb += DT * (dvdt1 + 2 * dvdt2 + 2 * dvdt3 + dvdt4) / 6.0;
+        w_current += DT * (dwdt1 + 2 * dwdt2 + 2 * dwdt3 + dwdt4) / 6.0;
+        */
+        /**/
+        // euler method
+        v_memb += DT * dvdt(v_memb, w_current, neuron);
+        w_current += DT * dwdt(v_memb, w_current, neuron);
+        
+        
         if(v_memb > 0){
             fprintf(v_file, "%f %f\n", time * DT, 0.0);
-            v_memb = neurontype.vr_reset;
-            w_current = w_current + neurontype.b_reset;
+            v_memb = neuron.vr_reset;
+            w_current = w_current + neuron.b_reset;
         }
+        
     }
 
     fclose(v_file);
