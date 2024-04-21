@@ -6,6 +6,14 @@
 
 **aeif_1neuron.h**: aeif_1neuron.cのパラメータセット。[2]参照。
 
+使い方
+
+output_txtというフォルダを作る。
+
+コンパイルする。
+
+実行する。
+
 参考文献
 
 [1] https://www.frontiersin.org/articles/10.3389/fncom.2019.00019
