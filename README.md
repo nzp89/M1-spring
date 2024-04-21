@@ -4,7 +4,7 @@
 
 **aeif_1neuron.c**: adaptive exponential integrate-and-fire neuron[2]のモデルを実装している。大体終わり。
 
-**aeif_parameter.h**: aeif_1neuron.cのパラメータセット。[2]参照。
+**aeif_1neuron.h**: aeif_1neuron.cのパラメータセット。[2]参照。
 
 参考文献
 
