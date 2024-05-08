@@ -1,3 +1,5 @@
+**一旦お休みします。**
+
 **aeif.c**: adaptive exponential integrate-and-fire neurons[1]のモデルを実装している。まだ途中。
 
 **aeif_bistable.h**: aeif.cのパラメータセット。[1]参照。
